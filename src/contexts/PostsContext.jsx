@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
+import { useSearch } from "./SearchContext";
 
 function createRandomPost() {
   return {
@@ -14,7 +15,8 @@ function PostsProvider({ children }) {
   const [posts, setPosts] = useState(() =>
     Array.from({ length: 30 }, () => createRandomPost())
   );
-  const [searchQuery, setSearchQuery] = useState("");
+
+  const { searchQuery, setSearchQuery } = useSearch();
 
   const searchedPosts =
     searchQuery.length > 0
@@ -33,18 +35,19 @@ function PostsProvider({ children }) {
     setPosts([]);
   }
 
-  return (
-    <PostsContext.Provider
-      value={{
+  const value = useMemo(
+    function () {
+      return {
         posts: searchedPosts,
         onClearPosts: handleClearPosts,
-        searchQuery,
-        setSearchQuery,
         onAddPost: handleAddPost,
-      }}
-    >
-      {children}
-    </PostsContext.Provider>
+      };
+    },
+    [searchedPosts, searchQuery]
+  );
+
+  return (
+    <PostsContext.Provider value={value}>{children}</PostsContext.Provider>
   );
 }
 
